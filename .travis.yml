@@ -1,0 +1,17 @@
+language: python
+python:
+  - "2.7"
+env:
+  - DJANGO=1.5.1
+  - TRAVIS=1
+install:
+  - sudo apt-get install binutils libproj-dev gdal-bin
+  - sudo apt-get install postgresql-9.1-postgis
+  - pip install -q Django==$DJANGO
+  - pip install -r requirements.txt
+before_script:
+  - sudo sudo -u postgres sh create_template_postgis-debian.sh >/dev/null
+  - psql -c 'create database event_gis template template_postgis;' -U postgres
+  - python ./event_gis/manage.py syncdb
+script:
+  - python ./event_gis/manage.py test
