@@ -1,5 +1,6 @@
 # Django settings for event_gis project.
 import os
+import dj_database_url
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -10,10 +11,16 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+try:
+    GEOS_LIBRARY_PATH = os.path.join(os.environ['GEOS_LIBRARY_PATH'], 'libgeos_c.so')
+    GDAL_LIBRARY_PATH = os.path.join(os.environ['GDAL_LIBRARY_PATH'], 'libgdal.so')
+except:
+    pass
+
 if os.environ.get('TRAVIS', None):
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+            'ENGINE': 'django.contrib.gis.db.backends.postgis', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
             'NAME': 'event_gis',                      # Or path to database file if using sqlite3.
             # The following settings are not used with sqlite3:
             'USER': 'postgres',
@@ -25,7 +32,7 @@ if os.environ.get('TRAVIS', None):
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+            'ENGINE': 'django.contrib.gis.db.backends.postgis', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
             'NAME': 'event_gis',                      # Or path to database file if using sqlite3.
             # The following settings are not used with sqlite3:
             'USER': 'event_gis',
@@ -34,6 +41,13 @@ else:
             'PORT': '',                      # Set to empty string for default.
         }
     }
+
+HEROKU = bool(os.environ.get('DATABASE_URL'))
+
+if HEROKU:
+    DATABASES['default'] = dj_database_url.config()
+    DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+    POSTGIS_VERSION = (2, 1, 0)
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
