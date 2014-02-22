@@ -15,6 +15,6 @@ before_script:
   - psql -c 'create database event_gis;' -U postgres
   - psql -d event_gis -c 'CREATE EXTENSION postgis;' -U postgres
   - psql -d event_gis -c 'CREATE EXTENSION postgis_topology;' -U postgres
-  - python ./event_gis/manage.py syncdb
+  - python ./event_gis/manage.py syncdb --noinput
 script:
   - python ./event_gis/manage.py test
