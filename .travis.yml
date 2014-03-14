@@ -16,13 +16,15 @@ before_script:
   - psql -d event_gis -c 'CREATE EXTENSION postgis;' -U postgres
   - psql -d event_gis -c 'CREATE EXTENSION postgis_topology;' -U postgres
   - python ./event_gis/manage.py syncdb --noinput
+  - python ./event_gis/manage.py migrate --noinput
+  - python ./event_gis/manage.py collectstatic --noinput
 script:
-  - python ./event_gis/manage.py test
-deploy:
-  provider: heroku
-  api_key: 2126fa8a-3c44-49e8-a60d-4a8b90fa218c
-  buildpack:
-    - "https://github.com/cyberdelia/heroku-geo-buildpack.git#1.1"
-    - "https://github.com/heroku/heroku-buildpack-python.git#v29"
-  run:
-    - "python event_gis/manage.py syncdb --noinput"
+  - python ./event_gis/manage.py test --noinput
+# deploy:
+#   provider: heroku
+#   api_key: 2126fa8a-3c44-49e8-a60d-4a8b90fa218c
+#   buildpack:
+#     - "https://github.com/cyberdelia/heroku-geo-buildpack.git#1.1"
+#     - "https://github.com/heroku/heroku-buildpack-python.git#v29"
+#   run:
+#     - "python event_gis/manage.py syncdb --noinput"

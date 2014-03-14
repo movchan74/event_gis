@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block media %}
+	{{ map_form.media }}
+{% endblock %}
+
+{% block main %}
+	<form method="post" >
+		{% csrf_token %}
+		{{ map_form.as_p }}
+	</form>
+{% endblock %}

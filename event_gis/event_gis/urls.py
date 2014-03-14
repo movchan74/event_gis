@@ -5,6 +5,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
+	url(r'', include('events.urls')),
     # Examples:
     # url(r'^$', 'event_gis.views.home', name='home'),
     # url(r'^event_gis/', include('event_gis.foo.urls')),
