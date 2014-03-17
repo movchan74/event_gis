@@ -20,11 +20,9 @@ before_script:
   - python ./event_gis/manage.py collectstatic --noinput
 script:
   - python ./event_gis/manage.py test --noinput
-# deploy:
-#   provider: heroku
-#   api_key: 2126fa8a-3c44-49e8-a60d-4a8b90fa218c
-#   buildpack:
-#     - "https://github.com/cyberdelia/heroku-geo-buildpack.git#1.1"
-#     - "https://github.com/heroku/heroku-buildpack-python.git#v29"
-#   run:
-#     - "python event_gis/manage.py syncdb --noinput"
+deploy:
+  provider: openshift
+  app: eventgis
+  user: movchan174@gmail.com
+  secure: "WX1oC3PAZpvYDwl98yPbnwSUDY3gwpTl+NpUBQmcK/vXo+AGnCxntoeGzpPdjNtyglv87xtW36ZyPgE6DIxBSv2dqOe1BMv+Y4M9sczoPuuYeVwMGenkWpEnh/5JhTjgDjEgaVIVsWWUUrWTFQfU0VexCPiFsbe/pOwtXDU3+xA="
+  domain: movchan

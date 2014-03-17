@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "You need to run: ${OPENSHIFT_REPO_DIR}/.openshift/bootstrap.sh"

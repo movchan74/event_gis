@@ -1,6 +1,6 @@
 # Django settings for event_gis project.
 import os
-import dj_database_url
+import urlparse
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -17,16 +17,27 @@ try:
 except:
     pass
 
-if os.environ.get('TRAVIS', None):
+if 'TRAVIS' in os.environ:
     DATABASES = {
         'default': {
             'ENGINE': 'django.contrib.gis.db.backends.postgis', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
             'NAME': 'event_gis',                      # Or path to database file if using sqlite3.
-            # The following settings are not used with sqlite3:
             'USER': 'postgres',
             'PASSWORD': '',
             'HOST': '127.0.0.1',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
             'PORT': '',                      # Set to empty string for default.
+        }
+    }
+elif 'OPENSHIFT_POSTGRESQL_DB_URL' in os.environ:
+    url = urlparse.urlparse(os.environ.get('OPENSHIFT_POSTGRESQL_DB_URL'))
+    DATABASES = {
+        'default' : {
+            'ENGINE' : 'django.contrib.gis.db.backends.postgis',
+            'NAME': os.environ['OPENSHIFT_APP_NAME'],
+            'USER': url.username,
+            'PASSWORD': url.password,
+            'HOST': url.hostname,
+            'PORT': url.port,
         }
     }
 else:
@@ -34,20 +45,12 @@ else:
         'default': {
             'ENGINE': 'django.contrib.gis.db.backends.postgis', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
             'NAME': 'event_gis',                      # Or path to database file if using sqlite3.
-            # The following settings are not used with sqlite3:
             'USER': 'event_gis',
             'PASSWORD': 'event_gis',
             'HOST': 'localhost',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
             'PORT': '',                      # Set to empty string for default.
         }
     }
-
-HEROKU = bool(os.environ.get('DATABASE_URL'))
-
-if HEROKU:
-    DATABASES['default'] = dj_database_url.config()
-    DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
-    POSTGIS_VERSION = (2, 1, 0)
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
@@ -89,7 +92,10 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = ''
+if 'OPENSHIFT_REPO_DIR' in os.environ:
+    STATIC_ROOT = os.path.join(os.environ.get('OPENSHIFT_REPO_DIR'), 'wsgi', 'static')
+else:
+    STATIC_ROOT = ''
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
