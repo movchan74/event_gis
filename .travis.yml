@@ -1,28 +1,29 @@
 language: python
 python:
-  - "2.7"
+- '2.7'
 env:
-  - DJANGO=1.5.1 TRAVIS=1
+- DJANGO=1.5.1 TRAVIS=1
 install:
-  - sudo apt-get update -q
-  - sudo apt-get remove --purge postgresql-9.1-postgis-scripts 
-  - sudo apt-get install binutils libproj-dev gdal-bin
-  - sudo apt-get install postgresql-9.1-postgis
-  - sudo apt-get install python-psycopg2
-  - pip install -q Django==$DJANGO
-  - pip install -r requirements.txt
+- sudo apt-get update -q
+- sudo apt-get remove --purge postgresql-9.1-postgis-scripts
+- sudo apt-get install binutils libproj-dev gdal-bin
+- sudo apt-get install postgresql-9.1-postgis
+- sudo apt-get install python-psycopg2
+- pip install -q Django==$DJANGO
+- pip install -r requirements.txt
 before_script:
-  - psql -c 'create database event_gis;' -U postgres
-  - psql -d event_gis -c 'CREATE EXTENSION postgis;' -U postgres
-  - psql -d event_gis -c 'CREATE EXTENSION postgis_topology;' -U postgres
-  - python ./event_gis/manage.py syncdb --noinput
-  - python ./event_gis/manage.py migrate --noinput
-  - python ./event_gis/manage.py collectstatic --noinput
+- psql -c 'create database event_gis;' -U postgres
+- psql -d event_gis -c 'CREATE EXTENSION postgis;' -U postgres
+- psql -d event_gis -c 'CREATE EXTENSION postgis_topology;' -U postgres
+- python ./event_gis/manage.py syncdb --noinput
+- python ./event_gis/manage.py migrate --noinput
+- python ./event_gis/manage.py collectstatic --noinput
 script:
-  - python ./event_gis/manage.py test --noinput
+- python ./event_gis/manage.py test --noinput
 deploy:
   provider: openshift
   app: eventgis
   user: movchan174@gmail.com
-  secure: "LaH9RnidijoB6JsxnQTYblMJwJtfVz0t32uxD4CbMKTr+OodXVWGGnwatLS6Tty9PCtq8kh0I7fYxkwusa/rs73R2MTiXEBJGOA7kfPkAnVtl7ZvVAgfHxo/Yn3g2BQJ63+c50VcYwWCfqS0oN4vykQfqnb5kMUpSXDC1LwzKvE="
   domain: movchan
+  password:
+    secure: RfJbjqJR2YWsgWo0/nZu66SMGK5UdMmr4yZnEJxarxdy3kmols1c7k1Meg+sIBNszYvfSasEplUBmcG+8LAmKWmz5bgykGASa7f43SqiG5v9VJNsUNVogeTquwK/O7jsgD4/sCHR8pNzm100yw3W1nzSd+aDDGWYpMOX+6dv4Ns=
