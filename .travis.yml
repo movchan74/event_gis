@@ -24,5 +24,5 @@ deploy:
   provider: openshift
   app: eventgis
   user: movchan174@gmail.com
-  secure: "HQ1VVSkAwj8s4x6Qc123Xn76TVJKq5b4yLO++hz/7eP+4vNQUv/V2AWugLcDEMnq+eWxq40Og3cfmRHLcZbBE8fMpbhCQS/ar8d9uPWVcpwJ6KWs+kcF0usAXYLz7z4UXhTEmLg0sLGunslB/Lxb96t10dvZdg/IfIeG9oTvf20="
+  secure: "LaH9RnidijoB6JsxnQTYblMJwJtfVz0t32uxD4CbMKTr+OodXVWGGnwatLS6Tty9PCtq8kh0I7fYxkwusa/rs73R2MTiXEBJGOA7kfPkAnVtl7ZvVAgfHxo/Yn3g2BQJ63+c50VcYwWCfqS0oN4vykQfqnb5kMUpSXDC1LwzKvE="
   domain: movchan
