@@ -14,3 +14,12 @@ class SimpleTest(TestCase):
         Tests that 1 + 1 always equals 2.
         """
         self.assertEqual(1 + 1, 2)
+
+
+from rest_framework.test import APITestCase
+
+class REST_tests(APITestCase):
+    def test_dummy(self):
+        data = ['tratata', 'kekeke', 'alalala']
+        response = self.client.get('/rest_dummy/', format='json')
+        self.assertEqual(response.data, data_false)
