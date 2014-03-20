@@ -1,3 +1,4 @@
+# coding=utf-8
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from forms import Map
@@ -8,19 +9,14 @@ def render_main_page(request):
 
 
 
-# from rest_framework import generics
-# from events.serializers import EventSerializer
+from rest_framework import generics
+from rest_framework.renderers import UnicodeJSONRenderer
+from events.models import Event
+from events.serializers import EventSerializer
 
-# class REST_DummyView(generics.ListAPIView):
-#     serializer_class = EventSerializer
+class ListAllEvents(generics.ListAPIView):
+    renderer_classes = (UnicodeJSONRenderer,)
+    serializer_class = EventSerializer
 
-#     def get_queryset(self):
-#         return Quest.objects.all() #TODO
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-
-class REST_DummyView(APIView):
-    def get(self, request, format=None):
-        usernames = ['tratata', 'kekeke', 'alalala']
-        return Response(usernames)
+    def get_queryset(self):
+        return Event.objects.order_by('name')

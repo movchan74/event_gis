@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 This file demonstrates writing tests using the unittest module. These will pass
 when you run "manage.py test".
@@ -17,11 +18,24 @@ class SimpleTest(TestCase):
 
 
 from rest_framework.test import APITestCase
+from rest_framework.test import APIRequestFactory
+from events.views import ListAllEvents
 
 class REST_tests(APITestCase):
-    def test_dummy(self):
-        data = ['tratata', 'kekeke', 'alalala']
-        wrong_data = ['trata', 'kekeke']
-        response = self.client.get('/rest_dummy/', format='json')
-        self.assertEqual(response.data, data)
-        self.assertNotEqual(response.data, wrong_data)
+
+    fixtures = ['events.json',]
+
+    def test_fixture(self):
+        expected_first_name = u'Stand-up в антикафе Happy People'
+
+        factory = APIRequestFactory()
+        request = factory.get('/all_events/')
+
+        view = ListAllEvents.as_view()
+        response = view(request)
+        response.render() #Here string is rendered for some reason
+
+        import json
+        real_first_name = json.loads(response.content)[0].get('name')
+
+        self.assertEqual(real_first_name, expected_first_name)
