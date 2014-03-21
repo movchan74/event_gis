@@ -2,9 +2,36 @@
 
 {% block media %}
 	{{ map_form.media }}
+	<script type="text/javascript">
+	window.onload = function () {
+		$("#help_me_here").click(function() {
+			alert("Welcome to our site! Hope you enjoy it!");
+		});	
+
+		$.ajax({
+			url: "/all_events",
+			type: "GET",
+			dataType: "json",
+			cache: false,
+			success: onDataReceived
+		});
+	}
+
+	function onDataReceived(data) {
+		var text="";
+		for (var i=0; i<data.length; ++i){
+			text+=(data[i].name + " - " + data[i].location + "\n");
+		}
+		$("#event_list").text(text);
+	}
+
+	</script>
 {% endblock %}
 
 {% block main %}
+	<h1>Welcome to EventGIS!</h1>
+	<input type="button" id="help_me_here" value="Hello!" />
+	<p id="event_list"/>
 	<form method="post" >
 		{% csrf_token %}
 		{{ map_form.as_p }}
