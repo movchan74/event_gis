@@ -1,10 +1,4 @@
 # coding=utf-8
-"""
-This file demonstrates writing tests using the unittest module. These will pass
-when you run "manage.py test".
-
-Replace this with more appropriate tests for your application.
-"""
 
 from django.test import TestCase
 
@@ -20,22 +14,36 @@ class SimpleTest(TestCase):
 from rest_framework.test import APITestCase
 from rest_framework.test import APIRequestFactory
 from events.views import ListAllEvents
+from events.models import Event
 
 class REST_tests(APITestCase):
 
     fixtures = ['events.json',]
 
-    def test_fixture(self):
-        expected_first_name = u'Stand-up в антикафе Happy People'
-
+    def setUp(self):
         factory = APIRequestFactory()
-        request = factory.get('/all_events/')
 
+        request = factory.get('/all_events/')
         view = ListAllEvents.as_view()
+
         response = view(request)
         response.render() #Here string is rendered for some reason
 
         import json
-        real_first_name = json.loads(response.content)[0].get('name')
+        self.response = json.loads(response.content)
+        self.sorted_events = Event.objects.order_by('name')
 
-        self.assertEqual(real_first_name, expected_first_name)
+
+    def test_fixture_count(self):
+        self.assertEqual(len(self.response), Event.objects.count())  
+
+    #Maybe there is a more pythonic way for next tests
+
+    def test_fixture_ordered_by_name(self):
+        for i in xrange( 1, len(self.sorted_events) ):
+            self.assertLess(self.response[i-1].get('name'), self.response[i].get('name'))
+
+    def test_fixture_contents(self):
+        for i in xrange( 0, len(self.sorted_events) ):
+            self.assertEqual(self.response[i].get('name'), self.sorted_events[i].name)
+            self.assertEqual(self.response[i].get('location'), self.sorted_events[i].location)

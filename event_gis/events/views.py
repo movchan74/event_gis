@@ -14,6 +14,7 @@ from rest_framework.renderers import UnicodeJSONRenderer
 from events.models import Event
 from events.serializers import EventSerializer
 
+# http://127.0.0.1:8000/all_events/
 class ListAllEvents(generics.ListAPIView):
     renderer_classes = (UnicodeJSONRenderer,)
     serializer_class = EventSerializer
