@@ -3,6 +3,7 @@
 {% block media %}
 	{{ map_form.media }}
 	<script type="text/javascript">
+
 	window.onload = function () {
 		$("#help_me_here").click(function() {
 			alert("Welcome to our site! Hope you enjoy it!");
@@ -20,20 +21,30 @@
 	function onDataReceived(data) {
 		var text="";
 		for (var i=0; i<data.length; ++i){
-			text+=(data[i].name + " - " + data[i].location + "\n");
+			text+=(data[i].name + " - " + data[i].location + "<br/><br/>");
 		}
-		$("#event_list").text(text);
+		$("#event_list").html(text);
 	}
 
 	</script>
 {% endblock %}
 
+
+
 {% block main %}
 	<h1>Welcome to EventGIS!</h1>
 	<input type="button" id="help_me_here" value="Hello!" />
-	<p id="event_list"/>
-	<form method="post" >
-		{% csrf_token %}
-		{{ map_form.as_p }}
-	</form>
+	<table>
+		<tr>
+			<td>
+				<form method="post" >
+					{% csrf_token %}
+					{{ map_form.as_p }}
+				</form>
+			</td>
+			<td>
+				<div id="event_list"/>
+			</td>
+		</tr>
+	</table>
 {% endblock %}
