@@ -1,13 +1,23 @@
 {% extends 'base.html' %}
 
 {% block media %}
-	{{ map_form.media }}
+	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=drawing"></script>
 	<script type="text/javascript">
+	var drawingManager;
+	var selectedPointOverlay;
+	var selectedOverlay;
+	var map;
 
 	window.onload = function () {
-		$("#help_me_here").click(function() {
-			alert("Welcome to our site! Hope you enjoy it!");
-		});	
+
+		$("#clear_features").click(function() {
+			drawingManager.setOptions({
+				drawingControl: true
+			});
+			if (selectedOverlay)
+				selectedOverlay.setMap(null);
+			$('#polygon').val('')
+		});
 
 		$.ajax({
 			url: "/all_events",
@@ -24,7 +34,62 @@
 			text+=(data[i].name + " - " + data[i].location + "<br/><br/>");
 		}
 		$("#event_list").html(text);
+		for (var i=0; i<data.length; ++i){
+			var pos = data[i].location.match(/[0-9]*[.][0-9]+/g)
+			var marker = new google.maps.Marker({
+			    position: new google.maps.LatLng(pos[1], pos[0]),
+			    map: map,
+			    title: data[i].name
+			});
+		}
 	}
+
+	function initialize() {
+		var mapOptions = {
+		    center: new google.maps.LatLng( {{ lat }}, {{ lon }}),
+		    zoom: 8
+		  };
+
+		  map = new google.maps.Map(document.getElementById('map'),
+		    mapOptions);
+
+		  drawingManager = new google.maps.drawing.DrawingManager({
+		    drawingMode: google.maps.drawing.OverlayType.MARKER,
+		    drawingControl: true,
+		    drawingControlOptions: {
+		      position: google.maps.ControlPosition.TOP_CENTER,
+		      drawingModes: [
+		        google.maps.drawing.OverlayType.MARKER,
+		        google.maps.drawing.OverlayType.POLYGON,
+		      ]
+		    },
+		    circleOptions: {
+		      fillColor: '#ffff00',
+		      fillOpacity: 1,
+		      strokeWeight: 5,
+		      clickable: false,
+		      editable: true,
+		      zIndex: 1
+		    }
+		  });
+		  drawingManager.setMap(map);
+
+        google.maps.event.addListener(drawingManager, "overlaycomplete", function(event){
+			drawingManager.setOptions({
+	 			drawingControl: false
+			});
+			selectedOverlay = event.overlay;
+			drawingManager.setDrawingMode(null);
+        	if (event.type != google.maps.drawing.OverlayType.MARKER) {
+	            $('#polygon').val(event.overlay.getPath().getArray());
+	        }
+	        else {
+	            $('#polygon').val(event.overlay.getPosition());
+	        }
+        });
+	}
+
+	google.maps.event.addDomListener(window, 'load', initialize);
 
 	</script>
 {% endblock %}
@@ -33,14 +98,12 @@
 
 {% block main %}
 	<h1>Welcome to EventGIS!</h1>
-	<input type="button" id="help_me_here" value="Hello!" />
+	<input type="button" id="clear_features" value="Очистить" />
+	<textarea id="polygon"> </textarea> 
 	<table>
 		<tr>
 			<td>
-				<form method="post" >
-					{% csrf_token %}
-					{{ map_form.as_p }}
-				</form>
+				<div id="map" style="width: 600px; height: 400px;"/>
 			</td>
 			<td>
 				<div id="event_list"/>
