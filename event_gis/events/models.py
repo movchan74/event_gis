@@ -16,3 +16,4 @@ class Event(models.Model):
 class EventType(models.Model):
 	name = models.CharField(max_length=150)
 	description = models.TextField()
+	
