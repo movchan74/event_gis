@@ -29,4 +29,5 @@ class GetEventInfo(RetrieveAPIView):
 
     def get_queryset(self):
         return Event.objects.all()
-        
+
+

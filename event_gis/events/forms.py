@@ -13,8 +13,6 @@ class PointWidget(forms.gis.BaseGMapWidget, forms.gis.PointWidget):
 		})
 		return ctx
  
- 
- 
 class Map(forms.Form):
 	poly = forms.gis.PolygonField(widget=PointWidget(attrs={
 		'map_width': 600,
@@ -41,9 +39,6 @@ class Map(forms.Form):
 # 	# 			'http://maps.google.com/maps/api/js?sensor=false',
 # 	# 		)
 	
-
-	
-
 # 	poly = forms.gis.PolygonField(widget=forms.gis.BaseGMapWidget(attrs={
 # 		'map_width': 600,
 # 		'map_height': 400,

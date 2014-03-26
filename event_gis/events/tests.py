@@ -37,7 +37,6 @@ class REST_tests(APITestCase):
     def get_event_info_response(self,event_id):
         factory = APIRequestFactory()
 
-
         request = factory.get('/event_info/')
         view = GetEventInfo.as_view()
 
@@ -45,15 +44,13 @@ class REST_tests(APITestCase):
         response.render() #Here string is rendered for some reason
 
         import json
-        return json.loads(response.content)        
+        return {'content': json.loads(response.content), 'status': response.status_code}
 
 
     #TEST: http://127.0.0.1:8000/all_events/
 
     def test_all_events_count(self):
         self.assertEqual(len(self.all_events_response), Event.objects.count())  
-
-    #Maybe there is a more pythonic way for next tests
 
     def test_all_events_ordered_by_name(self):
         for i in xrange( 1, len(self.sorted_events) ):
@@ -69,20 +66,31 @@ class REST_tests(APITestCase):
 
     def test_event_info_contents(self):
         for i in xrange( 1, Event.objects.count() ):
-            event_info_response = self.get_event_info_response(i)
+            event_info_response = self.get_event_info_response(i).get('content')
             self.assertEqual(event_info_response.get('id'), Event.objects.get(id=i).id)
             self.assertEqual(event_info_response.get('name'), Event.objects.get(id=i).name)
             self.assertEqual(event_info_response.get('description'), Event.objects.get(id=i).description)
             self.assertEqual(event_info_response.get('address'), Event.objects.get(id=i).address)
             self.assertEqual(event_info_response.get('location'), Event.objects.get(id=i).location)
-            self.assertEqual(event_info_response.get('event_type'), Event.objects.get(id=i).event_type.id) #TODO: serializers.py
-            #TODO: format time
-            # self.assertEqual(event_info_response.get('start_time'), Event.objects.get(id=i).start_time)
-            # self.assertEqual(event_info_response.get('end_time'), Event.objects.get(id=i).end_time)
+            self.assertEqual(event_info_response.get('event_type').get('id'), Event.objects.get(id=i).event_type.id) #TODO: serializers.py
+
+            import time
+            start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime( event_info_response.get('start_time'), "%Y-%m-%dT%H:%M:%SZ" ))
+            self.assertEqual( start_time_str  , Event.objects.get(id=i).start_time.strftime("%Y-%m-%d %H:%M:%S"))
+            end_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime( event_info_response.get('end_time'), "%Y-%m-%dT%H:%M:%SZ" ))
+            self.assertEqual( end_time_str  , Event.objects.get(id=i).end_time.strftime("%Y-%m-%d %H:%M:%S"))
+
 
     def test_event_info_error_out_of_range(self):
-        #TODO: also check 404 status
-        self.assertEqual(self.get_event_info_response(0).get('detail'), 'Not found')
-        self.assertEqual(self.get_event_info_response(-1).get('detail'), 'Not found')
-        self.assertEqual(self.get_event_info_response( Event.objects.count() + 1 ).get('detail'), 'Not found')
+        
+        from rest_framework.status import HTTP_404_NOT_FOUND
+        self.assertEqual(self.get_event_info_response(0).get('status'), HTTP_404_NOT_FOUND)
+        self.assertEqual(self.get_event_info_response(-1).get('status'), HTTP_404_NOT_FOUND)
+        self.assertEqual(self.get_event_info_response(Event.objects.count() + 1).get('status'), HTTP_404_NOT_FOUND)
+
+        self.assertEqual(self.get_event_info_response(0).get('content').get('detail'), 'Not found')
+        self.assertEqual(self.get_event_info_response(-1).get('content').get('detail'), 'Not found')
+        self.assertEqual(self.get_event_info_response( Event.objects.count() + 1 ).get('content').get('detail'), 'Not found')
+
+
 
