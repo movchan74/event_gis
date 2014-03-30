@@ -12,7 +12,5 @@ class EventInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = ('id', 'name', 'description', 'address', 'location', 'event_type', 'start_time', 'end_time')
-        depth = 1
-
 
         
