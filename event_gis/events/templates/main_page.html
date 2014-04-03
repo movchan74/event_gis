@@ -11,6 +11,7 @@ var map;
 var markers = [];
 var markerContents = [];
 var openedInfoWindow;
+var polygons;
 
 window.onload = function () {
 
@@ -23,6 +24,10 @@ window.onload = function () {
 		$('#polygon').val('');
 	});
 
+	mapInitialize();
+};
+
+function getEvents (/*types, startDate, endDate, bounds*/) {
 	$.ajax({
 		url: "/all_events",
 		type: "GET",
@@ -30,7 +35,7 @@ window.onload = function () {
 		cache: false,
 		success: onDataReceived
 	});
-};
+}
 
 function setInfowindow(newInfoWindow) {
 	if (openedInfoWindow !== undefined) {
@@ -40,10 +45,18 @@ function setInfowindow(newInfoWindow) {
 	openedInfoWindow = newInfoWindow;
 }
 
+function clearMarkers () {
+	for (var i = 0; i < markers.length; i++) {
+		markers[i].setMap(null);
+	};
+	markers = [];
+	markerContents = [];
+}
+
 function createMarker(map,latlng,title,markerContent) {
 	var iconSize = new google.maps.Size(20, 34);
 	var iconShadowSize = new google.maps.Size(37, 34);
-	var iconHotSpotOffset = new google.maps.Point(9, 0); // Should this be (9, 34)?
+	var iconHotSpotOffset = new google.maps.Point(9, 34); // Should this be (9, 34)?
 	var iconPosition = new google.maps.Point(0, 0);
 	var infoWindowAnchor = new google.maps.Point(9, 2);
 	var infoShadowAnchor = new google.maps.Point(18, 25);
@@ -100,16 +113,19 @@ function createMarker(map,latlng,title,markerContent) {
 }
 
 function onDataReceived(events) {
-	var text="";
+	var htmlEventsList = "";
 
 	// create list of events next to map
-	for (var i=0; i<events.length; ++i){
-		text+=('<div id="event_' + events[i].id+ '">' + events[i].name + " - " + events[i].location + "</div><br/><br/>");
-	}
-	$("#event_list").html(text);
+	// for (var i=0; i<events.length; ++i){
+	// 	text+=('<div id="event_' + events[i].id+ '">' + events[i].name + " - " + events[i].location + "</div><br/><br/>");
+	// }
+	
 
 	var bounds = new google.maps.LatLngBounds();
-	//create markers
+	
+	// delete previous markers from map
+	clearMarkers();
+	// create new markers
 	for (var i = 0; i < events.length; ++i){
 		var currentEvent = events[i];
 
@@ -117,6 +133,10 @@ function onDataReceived(events) {
 		var lat = pointlatlng[1];
 		var lng = pointlatlng[0];
 		var latlng = new google.maps.LatLng(lat,lng);
+
+		if (!google.maps.geometry.poly.containsLocation(latlng,polygons)) {
+			continue;
+		}
 
 		var title = currentEvent.name;
 		var markerContent = "<div style='font-size:12px'>";
@@ -130,14 +150,17 @@ function onDataReceived(events) {
 		bounds.extend(latlng);
 
 		// add features for list of event next to map
+		htmlEventsList += ('<div id="event_' + events[i].id+ '">' + events[i].name + 
+			" - " + events[i].location + "</div><br/><br/>");
 	}
 
 	map.fitBounds(bounds);
 	map.setCenter(bounds.getCenter());
-	map.setZoom(10);
+	//map.setZoom(10);
+	$("#eventslist").html(htmlEventsList);
 
-	var mcOptions = {gridSize: 20, maxZoom: 15};
-	var markerCluster = new MarkerClusterer(map, markers, mcOptions);
+	//var mcOptions = {gridSize: 20, maxZoom: 15};
+	//var markerCluster = new MarkerClusterer(map, markers, mcOptions);
 }
 
 function mapInitialize() {
@@ -175,17 +198,21 @@ function mapInitialize() {
 		});
 		selectedOverlay = event.overlay;
 		drawingManager.setDrawingMode(null);
-		if (event.type != google.maps.drawing.OverlayType.MARKER) {
+		if (event.type == google.maps.drawing.OverlayType.POLYGON) {
 			$('#polygon').val(event.overlay.getPath().getArray());
 		}
 		else {
 			$('#polygon').val(event.overlay.getPosition());
 		}
 	});
+	google.maps.event.addListener(drawingManager, "polygoncomplete", function(polygon){
+		polygons = polygon;
+		getEvents();
+	});
 	drawingManager.setDrawingMode(null);
 }
 
-google.maps.event.addDomListener(window, 'load', mapInitialize);
+//google.maps.event.addDomListener(window, 'load', mapInitialize);
 
 </script>
 {% endblock %}
@@ -202,7 +229,7 @@ google.maps.event.addDomListener(window, 'load', mapInitialize);
 				<div id="map" style="width: 600px; height: 400px;"/>
 			</td>
 			<td>
-				<div id="event_list"/>
+				<div id="eventslist"/>
 			</td>
 		</tr>
 	</table>
