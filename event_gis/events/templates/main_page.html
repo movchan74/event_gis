@@ -11,7 +11,10 @@ var map;
 var markers = [];
 var markerContents = [];
 var openedInfoWindow;
-var polygons;
+var selectedPolygon;
+
+var defaultLatLng = new google.maps.LatLng( {{ lat }}, {{ lon }});
+var defaultZoom = 8;
 
 window.onload = function () {
 
@@ -134,7 +137,7 @@ function onDataReceived(events) {
 		var lng = pointlatlng[0];
 		var latlng = new google.maps.LatLng(lat,lng);
 
-		if (!google.maps.geometry.poly.containsLocation(latlng,polygons)) {
+		if (!google.maps.geometry.poly.containsLocation(latlng,selectedPolygon)) {
 			continue;
 		}
 
@@ -154,9 +157,14 @@ function onDataReceived(events) {
 			" - " + events[i].location + "</div><br/><br/>");
 	}
 
-	map.fitBounds(bounds);
-	map.setCenter(bounds.getCenter());
-	//map.setZoom(10);
+	if (markers.length != 0) {
+		map.fitBounds(bounds);
+		map.setCenter(bounds.getCenter());
+	}
+	else {
+		map.setCenter(defaultLatLng);
+		map.setZoom(defaultZoom);
+	}
 	$("#eventslist").html(htmlEventsList);
 
 	//var mcOptions = {gridSize: 20, maxZoom: 15};
@@ -165,8 +173,8 @@ function onDataReceived(events) {
 
 function mapInitialize() {
 	var mapOptions = {
-		center: new google.maps.LatLng( {{ lat }}, {{ lon }}),
-		zoom: 8
+		center: defaultLatLng,
+		zoom: defaultZoom
 	};
 
 	map = new google.maps.Map(document.getElementById('map'),mapOptions);
@@ -206,7 +214,7 @@ function mapInitialize() {
 		}
 	});
 	google.maps.event.addListener(drawingManager, "polygoncomplete", function(polygon){
-		polygons = polygon;
+		selectedPolygon = polygon;
 		getEvents();
 	});
 	drawingManager.setDrawingMode(null);
