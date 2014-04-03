@@ -1,0 +1,73 @@
+* { 
+	margin:0px; 
+	padding:0px; 
+}
+
+html { 
+	height:100%; 
+}
+
+body { 
+	min-height:100%; 
+	position:relative; 
+	min-width:800px; 
+}
+
+* html body { 
+	height:100%; 
+}
+
+.wrap {
+	width:100%; 
+	padding-bottom:60px; 
+	overflow:hidden;
+}
+
+.content {
+	width:100%; 
+	padding-bottom:60px; 
+	overflow:hidden;
+}
+
+#map {
+	width: 60%; 
+	height: 400px;
+	float: left;
+}
+
+#debug {
+	background-color: #DFD;
+	width: 30%;
+	margin-left: 5%;
+	padding: 2%;
+	float: left;
+}
+
+#eventslist {
+	float: left;
+	width: 30%;
+	margin-left: 5%;
+	padding: 2%;
+	background-color: #DDD;
+}
+
+.footer {
+	position:absolute; 
+	/*clear: both;*/
+	margin-top: 20px;
+	padding-top: 20px;
+	bottom:-20px;
+	width: 100%;
+	height: 60px;
+	/*background-color: #F00;*/
+	text-align: center;
+	font-size: 12pt;
+}
+
+.header { 
+	background:#DDF; 
+	padding: 20px;
+	margin-bottom: 20px;
+	height:70px; 
+	width:100%; 
+}

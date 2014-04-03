@@ -225,20 +225,15 @@ function mapInitialize() {
 </script>
 {% endblock %}
 
-
+{% block header %}
+	<h1>Welcome to EventGIS!</h1>
+{% endblock %}
 
 {% block main %}
-	<h1>Welcome to EventGIS!</h1>
-	<input type="button" id="clear_features" value="Очистить" />
-	<textarea id="polygon"> </textarea> 
-	<table>
-		<tr>
-			<td>
-				<div id="map" style="width: 600px; height: 400px;"/>
-			</td>
-			<td>
-				<div id="eventslist"/>
-			</td>
-		</tr>
-	</table>
+	<div id="map"></div>
+	<div id="debug">
+		<input type="button" id="clear_features" value="Очистить" />
+		<textarea id="polygon"> </textarea> 
+	</div>
+	<div id="eventslist"></div>
 {% endblock %}
