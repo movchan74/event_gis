@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import floppyforms as forms
  
 class PointWidget(forms.gis.BaseGMapWidget, forms.gis.PointWidget):
@@ -83,3 +84,5 @@ class Map(forms.Form):
 # 	# 			'lat': self.default_lat,
 # 	# 		})
 # 	# 		return ctx
+=======
+>>>>>>> 6a8878d951c2758ac001dbf4e3fb1a24a6908295

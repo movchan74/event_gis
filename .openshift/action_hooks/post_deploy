@@ -3,3 +3,4 @@
 echo "You need to run: ${OPENSHIFT_REPO_DIR}/.openshift/bootstrap.sh"
 ${OPENSHIFT_REPO_DIR}/event_gis/manage.py collectstatic --noinput
 ${OPENSHIFT_REPO_DIR}/event_gis/manage.py migrate --noinput
+${OPENSHIFT_REPO_DIR}/event_gis/manage.py loaddata events.json --noinput
