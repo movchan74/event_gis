@@ -1,103 +1,193 @@
 {% extends 'base.html' %}
 
 {% block media %}
-	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=drawing"></script>
-	<script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer.js"></script>
-	<script type="text/javascript">
-	var drawingManager;
-	var selectedPointOverlay;
-	var selectedOverlay;
-	var map;
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=drawing"></script>
+<script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer.js"></script>
+<script type="text/javascript">
+var drawingManager;
+var selectedPointOverlay;
+var selectedOverlay;
+var map;
+var markers = [];
+var markerContents = [];
+var openedInfoWindow;
 
-	window.onload = function () {
+window.onload = function () {
 
-		$("#clear_features").click(function() {
-			drawingManager.setOptions({
-				drawingControl: true
-			});
-			if (selectedOverlay)
-				selectedOverlay.setMap(null);
-			$('#polygon').val('')
+	$("#clear_features").click(function() {
+		drawingManager.setOptions({
+			drawingControl: true
 		});
+		if (selectedOverlay)
+			selectedOverlay.setMap(null);
+		$('#polygon').val('');
+	});
 
-		$.ajax({
-			url: "/all_events",
-			type: "GET",
-			dataType: "json",
-			cache: false,
-			success: onDataReceived
+	$.ajax({
+		url: "/all_events",
+		type: "GET",
+		dataType: "json",
+		cache: false,
+		success: onDataReceived
+	});
+};
+
+function setInfowindow(newInfoWindow) {
+	if (openedInfoWindow !== undefined) {
+		openedInfoWindow.close();
+	}
+
+	openedInfoWindow = newInfoWindow;
+}
+
+function createMarker(map,latlng,title,markerContent) {
+	var iconSize = new google.maps.Size(20, 34);
+	var iconShadowSize = new google.maps.Size(37, 34);
+	var iconHotSpotOffset = new google.maps.Point(9, 0); // Should this be (9, 34)?
+	var iconPosition = new google.maps.Point(0, 0);
+	var infoWindowAnchor = new google.maps.Point(9, 2);
+	var infoShadowAnchor = new google.maps.Point(18, 25);
+
+	var iconShadowUrl = "http://www.google.com/mapfiles/shadow50.png";
+	var iconImageUrl;
+	var iconImageOverUrl;
+	var iconImageOutUrl;
+
+	iconImageOutUrl = "{{ STATIC_URL }}img/orangemarker.png";
+	iconImageOverUrl = "{{ STATIC_URL }}img/greenmarker.png";
+	iconImageUrl = iconImageOutUrl;
+	
+
+	var markerShadow =
+			new google.maps.MarkerImage(iconShadowUrl, iconShadowSize, iconPosition, iconHotSpotOffset);
+
+	var markerImage =
+			new google.maps.MarkerImage(iconImageUrl, iconSize, iconPosition, iconHotSpotOffset);
+
+	var markerImageOver =
+			new google.maps.MarkerImage(iconImageOverUrl, iconSize, iconPosition, iconHotSpotOffset);
+
+	var markerImageOut =
+			new google.maps.MarkerImage(iconImageOutUrl, iconSize, iconPosition, iconHotSpotOffset);
+
+	var markerOptions = {
+		title: title,
+		icon: markerImage,
+		shadow: markerShadow,
+		position: latlng,
+		map: map
+	};
+
+	var marker = new google.maps.Marker(markerOptions);
+
+	google.maps.event.addListener(marker, "click", function() {
+		var infowindowOptions = {
+			content: markerContent
+		};
+		var infoWindow = new google.maps.InfoWindow(infowindowOptions);
+		setInfowindow(infoWindow);
+		infoWindow.open(map, marker);
+		marker.setIcon(markerImageOut);
+	});
+	google.maps.event.addListener(marker, "mouseover", function() {
+		marker.setIcon(markerImageOver);
+	});
+	google.maps.event.addListener(marker, "mouseout", function() {
+		marker.setIcon(markerImageOut);
+	});
+
+	return marker;
+}
+
+function onDataReceived(events) {
+	var text="";
+
+	// create list of events next to map
+	for (var i=0; i<events.length; ++i){
+		text+=('<div id="event_' + events[i].id+ '">' + events[i].name + " - " + events[i].location + "</div><br/><br/>");
+	}
+	$("#event_list").html(text);
+
+	var bounds = new google.maps.LatLngBounds();
+	//create markers
+	for (var i = 0; i < events.length; ++i){
+		var currentEvent = events[i];
+
+		var pointlatlng = currentEvent.location.match(/[0-9]*[.][0-9]+/g);
+		var lat = pointlatlng[1];
+		var lng = pointlatlng[0];
+		var latlng = new google.maps.LatLng(lat,lng);
+
+		var title = currentEvent.name;
+		var markerContent = "<div style='font-size:12px'>";
+		markerContent += "<strong>" + currentEvent.name + "</strong>";
+		markerContent += "<br/>" + currentEvent.location; // change to description
+		markerContent += "</div>";
+
+		var marker = createMarker(map,latlng,title,markerContent); // to do
+		markers.push(marker);
+		markerContents.push(markerContent);
+		bounds.extend(latlng);
+
+		// add features for list of event next to map
+	}
+
+	map.fitBounds(bounds);
+	map.setCenter(bounds.getCenter());
+	map.setZoom(10);
+
+	var mcOptions = {gridSize: 20, maxZoom: 15};
+	var markerCluster = new MarkerClusterer(map, markers, mcOptions);
+}
+
+function mapInitialize() {
+	var mapOptions = {
+		center: new google.maps.LatLng( {{ lat }}, {{ lon }}),
+		zoom: 8
+	};
+
+	map = new google.maps.Map(document.getElementById('map'),mapOptions);
+
+	drawingManager = new google.maps.drawing.DrawingManager({
+		drawingMode: google.maps.drawing.OverlayType.MARKER,
+		drawingControl: true,
+		drawingControlOptions: {
+			position: google.maps.ControlPosition.TOP_CENTER,
+			drawingModes: [
+				google.maps.drawing.OverlayType.MARKER,
+				google.maps.drawing.OverlayType.POLYGON,
+			]
+		},
+		circleOptions: {
+			fillColor: '#ffff00',
+			fillOpacity: 1,
+			strokeWeight: 5,
+			clickable: false,
+			editable: true,
+			zIndex: 1
+		}
+	});
+	drawingManager.setMap(map);
+
+	google.maps.event.addListener(drawingManager, "overlaycomplete", function(event){
+		drawingManager.setOptions({
+			drawingControl: false
 		});
-	}
-
-	function onDataReceived(data) {
-		var text="";
-		for (var i=0; i<data.length; ++i){
-			text+=(data[i].name + " - " + data[i].location + "<br/><br/>");
+		selectedOverlay = event.overlay;
+		drawingManager.setDrawingMode(null);
+		if (event.type != google.maps.drawing.OverlayType.MARKER) {
+			$('#polygon').val(event.overlay.getPath().getArray());
 		}
-		$("#event_list").html(text);
-		var markers = [];
-		for (var i=0; i<data.length; ++i){
-			var pos = data[i].location.match(/[0-9]*[.][0-9]+/g)
-			var marker = new google.maps.Marker({
-			    position: new google.maps.LatLng(pos[1], pos[0]),
-			    map: map,
-			    title: data[i].name
-			});
-			markers.push(marker);
+		else {
+			$('#polygon').val(event.overlay.getPosition());
 		}
-		var mcOptions = {gridSize: 20, maxZoom: 15};
-		var markerCluster = new MarkerClusterer(map, markers, mcOptions);
-	}
+	});
+	drawingManager.setDrawingMode(null);
+}
 
-	function initialize() {
-		var mapOptions = {
-		    center: new google.maps.LatLng( {{ lat }}, {{ lon }}),
-		    zoom: 8
-		  };
+google.maps.event.addDomListener(window, 'load', mapInitialize);
 
-		  map = new google.maps.Map(document.getElementById('map'),
-		    mapOptions);
-
-		  drawingManager = new google.maps.drawing.DrawingManager({
-		    drawingMode: google.maps.drawing.OverlayType.MARKER,
-		    drawingControl: true,
-		    drawingControlOptions: {
-		      position: google.maps.ControlPosition.TOP_CENTER,
-		      drawingModes: [
-		        google.maps.drawing.OverlayType.MARKER,
-		        google.maps.drawing.OverlayType.POLYGON,
-		      ]
-		    },
-		    circleOptions: {
-		      fillColor: '#ffff00',
-		      fillOpacity: 1,
-		      strokeWeight: 5,
-		      clickable: false,
-		      editable: true,
-		      zIndex: 1
-		    }
-		  });
-		  drawingManager.setMap(map);
-
-        google.maps.event.addListener(drawingManager, "overlaycomplete", function(event){
-			drawingManager.setOptions({
-	 			drawingControl: false
-			});
-			selectedOverlay = event.overlay;
-			drawingManager.setDrawingMode(null);
-        	if (event.type != google.maps.drawing.OverlayType.MARKER) {
-	            $('#polygon').val(event.overlay.getPath().getArray());
-	        }
-	        else {
-	            $('#polygon').val(event.overlay.getPosition());
-	        }
-        });
-        drawingManager.setDrawingMode(null);
-	}
-
-	google.maps.event.addDomListener(window, 'load', initialize);
-
-	</script>
+</script>
 {% endblock %}
 
 
