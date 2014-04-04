@@ -10,6 +10,7 @@ var selectedOverlay;
 var map;
 var markers = [];
 var markerContents = [];
+var numberOfMarkers = 0;
 var openedInfoWindow;
 var selectedPolygon;
 
@@ -48,12 +49,22 @@ function setInfowindow(newInfoWindow) {
 	openedInfoWindow = newInfoWindow;
 }
 
+function eventClick(i) {
+	var infoWindowOptions = {
+		content: markerContents[i]
+	};
+	var infoWindow = new google.maps.InfoWindow(infoWindowOptions);
+	infoWindow.open(map, markers[i]);
+	setInfowindow(infoWindow);
+}
+
 function clearMarkers () {
 	for (var i = 0; i < markers.length; i++) {
 		markers[i].setMap(null);
-	};
+	}
 	markers = [];
 	markerContents = [];
+	numberOfMarkers = 0;
 }
 
 function createMarker(map,latlng,title,markerContent) {
@@ -116,13 +127,7 @@ function createMarker(map,latlng,title,markerContent) {
 }
 
 function onDataReceived(events) {
-	var htmlEventsList = "";
-
-	// create list of events next to map
-	// for (var i=0; i<events.length; ++i){
-	// 	text+=('<div id="event_' + events[i].id+ '">' + events[i].name + " - " + events[i].location + "</div><br/><br/>");
-	// }
-	
+	var htmlEventsList = "";	
 
 	var bounds = new google.maps.LatLngBounds();
 	
@@ -150,14 +155,18 @@ function onDataReceived(events) {
 		var marker = createMarker(map,latlng,title,markerContent); // to do
 		markers.push(marker);
 		markerContents.push(markerContent);
+		
 		bounds.extend(latlng);
 
 		// add features for list of event next to map
-		htmlEventsList += ('<div id="event_' + events[i].id+ '">' + events[i].name + 
-			" - " + events[i].location + "</div><br/><br/>");
+		htmlEventsList += ('<div class="event"><a href="javascript:eventClick(' + 
+			numberOfMarkers + ')">' + currentEvent.name + 
+			"<\/a><br>" + currentEvent.location + "<\/div><br><br>");
+		
+		++numberOfMarkers;
 	}
 
-	if (markers.length != 0) {
+	if (markers.length !== 0) {
 		map.fitBounds(bounds);
 		map.setCenter(bounds.getCenter());
 	}
@@ -186,13 +195,14 @@ function mapInitialize() {
 			position: google.maps.ControlPosition.TOP_CENTER,
 			drawingModes: [
 				google.maps.drawing.OverlayType.MARKER,
-				google.maps.drawing.OverlayType.POLYGON,
+				google.maps.drawing.OverlayType.POLYGON
 			]
 		},
-		circleOptions: {
-			fillColor: '#ffff00',
-			fillOpacity: 1,
-			strokeWeight: 5,
+		polygonOptions: {
+			fillColor: '#FF9933',
+			fillOpacity: 0.2,
+			strokeColor: '#FF9933',
+			strokeWeight: 3,
 			clickable: false,
 			editable: true,
 			zIndex: 1
@@ -205,6 +215,14 @@ function mapInitialize() {
 			drawingControl: false
 		});
 		selectedOverlay = event.overlay;
+		google.maps.event.addListener(selectedOverlay.getPath(), 'insert_at', function(index, obj) {
+			selectedPolygon = selectedOverlay;
+			getEvents();
+		});
+		google.maps.event.addListener(selectedOverlay.getPath(), 'set_at', function(index, obj) {
+			selectedPolygon = selectedOverlay;
+			getEvents();
+		});
 		drawingManager.setDrawingMode(null);
 		if (event.type == google.maps.drawing.OverlayType.POLYGON) {
 			$('#polygon').val(event.overlay.getPath().getArray());
@@ -217,6 +235,7 @@ function mapInitialize() {
 		selectedPolygon = polygon;
 		getEvents();
 	});
+
 	drawingManager.setDrawingMode(null);
 }
 
@@ -232,8 +251,10 @@ function mapInitialize() {
 {% block main %}
 	<div id="map"></div>
 	<div id="debug">
+		<p>Отладочная информация</p>
+		<br>
+		<textarea id="polygon"> </textarea> <br>
 		<input type="button" id="clear_features" value="Очистить" />
-		<textarea id="polygon"> </textarea> 
 	</div>
 	<div id="eventslist"></div>
 {% endblock %}

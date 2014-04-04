@@ -51,6 +51,16 @@ body {
 	background-color: #DDD;
 }
 
+a {
+	color: #033;
+}
+
+.event {
+	border: 1px dotted #999;
+	padding: 5px;
+	background-color: #CCC;
+}
+
 .footer {
 	position:absolute; 
 	/*clear: both;*/
