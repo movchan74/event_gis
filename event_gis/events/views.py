@@ -12,22 +12,23 @@ def render_main_page(request):
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.renderers import UnicodeJSONRenderer
 from events.models import Event
-from events.serializers import EventSerializer, EventInfoSerializer
+from events.serializers import EventSerializer
+from datetime import datetime
 
-# http://127.0.0.1:8000/all_events/
-class ListAllEvents(ListAPIView):
+# http://127.0.0.1:8000/filter_events?type=1+3&start_time=2013-10-25+13-30&end_time=2013-10-26+10-00
+class FilterEvents(ListAPIView):
     renderer_classes = (UnicodeJSONRenderer,)
     serializer_class = EventSerializer
 
     def get_queryset(self):
-        return Event.objects.order_by('name')
+        types = self.request.QUERY_PARAMS.get('type').split()
+        types = map( int, types )
 
-# http://127.0.0.1:8000/event_info/<id>/
-class GetEventInfo(RetrieveAPIView):
-    renderer_classes = (UnicodeJSONRenderer,)
-    serializer_class = EventInfoSerializer
+        start_time_str = self.request.QUERY_PARAMS.get('start_time')
+        start_time = datetime.strptime( start_time_str, "%Y-%m-%d %H-%M" )
 
-    def get_queryset(self):
-        return Event.objects.all()
+        end_time_str = self.request.QUERY_PARAMS.get('end_time')
+        end_time = datetime.strptime( end_time_str, "%Y-%m-%d %H-%M" )
 
+        return Event.objects.filter( event_type__in = types ).filter( start_time__gt = start_time).filter( end_time__lt = end_time )
 
