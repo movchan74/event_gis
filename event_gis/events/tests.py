@@ -72,7 +72,7 @@ class REST_tests(APITestCase):
             self.assertEqual(event_info_response.get('description'), Event.objects.get(id=i).description)
             self.assertEqual(event_info_response.get('address'), Event.objects.get(id=i).address)
             self.assertEqual(event_info_response.get('location'), Event.objects.get(id=i).location)
-            self.assertEqual(event_info_response.get('event_type'), Event.objects.get(id=i).event_type)
+            # self.assertEqual(event_info_response.get('event_type'), Event.objects.get(id=i).event_type)
 
             import time
             start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.strptime( event_info_response.get('start_time'), "%Y-%m-%dT%H:%M:%SZ" ))
