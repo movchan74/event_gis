@@ -30,9 +30,10 @@ body {
 }
 
 #map {
-	width: 60%; 
+	width: 100%; 
 	height: 400px;
 	float: left;
+	/*clear: both;*/
 }
 
 #debug {
@@ -46,9 +47,25 @@ body {
 #eventslist {
 	float: left;
 	width: 30%;
+	/*height: 500px;*/
 	margin-left: 5%;
 	padding: 2%;
 	background-color: #DDD;
+	clear: right;
+}
+
+#eventtypes {
+	float: left;
+	width: 100%;
+	background-color: #DFF;
+	margin-top: 20px;
+	clear: right;
+}
+
+#leftcolumn {
+	float: left;
+	width: 60%;
+	/*background-color: #DFF;*/
 }
 
 a {

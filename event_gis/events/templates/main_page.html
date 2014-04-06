@@ -13,6 +13,7 @@ var markerContents = [];
 var numberOfMarkers = 0;
 var openedInfoWindow;
 var selectedPolygon;
+var selectedTypes = [];
 
 var defaultLatLng = new google.maps.LatLng( {{ lat }}, {{ lon }});
 var defaultZoom = 8;
@@ -28,16 +29,49 @@ window.onload = function () {
 		$('#polygon').val('');
 	});
 
+	getEventTypes();
 	mapInitialize();
 };
 
 function getEvents (/*types, startDate, endDate, bounds*/) {
+	var types = selectedTypes.join('+');
+	if (types !== undefined && types != '')
+		types='type=' + types + '&';
 	$.ajax({
-		url: "/all_events",
+		url: "/filter_events?"+ types +"start_time=2011-01-01+00-00&end_time=2014-04-04+00-00",
 		type: "GET",
 		dataType: "json",
 		cache: false,
 		success: onDataReceived
+	});
+}
+
+function getEventTypes () {
+	$.ajax({
+		url: "/event_types",
+		type: "GET",
+		dataType: "json",
+		cache: false,
+		success: function (types) {
+			$("#eventtypes").html(types.reduce(function(pr,cur){
+				return pr + '<input type=checkbox name="eventtype' + cur.id + 
+					'" class="eventtype">&nbsp;' + cur.description + '</input><br>';
+			},""));
+			$("#eventtypes").click (function () {
+				var inp = document.getElementsByTagName('input');
+				var length = inp.length;
+				
+				selectedTypes = [];
+				
+				for (var i = 0; i < length; i++) {
+					if (inp[i].checked) {
+						// mas.push(inp[i].nextSibling.nodeValue);
+						selectedTypes.push(inp[i].name.match(/eventtype([0-9]*)/)[1]);
+					}
+				}
+				getEvents();
+			});
+		}
 	});
 }
 
@@ -148,11 +182,11 @@ function onDataReceived(events) {
 
 		var title = currentEvent.name;
 		var markerContent = "<div style='font-size:12px'>";
-		markerContent += "<strong>" + currentEvent.name + "</strong>";
-		markerContent += "<br/>" + currentEvent.location; // change to description
+		markerContent += "<b>" + currentEvent.name + "</b>";
+		markerContent += "<br/>" + currentEvent.description;
 		markerContent += "</div>";
 
-		var marker = createMarker(map,latlng,title,markerContent); // to do
+		var marker = createMarker(map,latlng,title,markerContent);
 		markers.push(marker);
 		markerContents.push(markerContent);
 		
@@ -161,18 +195,18 @@ function onDataReceived(events) {
 		// add features for list of event next to map
 		htmlEventsList += ('<div class="event"><a href="javascript:eventClick(' + 
 			numberOfMarkers + ')">' + currentEvent.name + 
-			"<\/a><br>" + currentEvent.location + "<\/div><br><br>");
+			"<\/a><br>" + currentEvent.address + "<\/div><br><br>");
 		
 		++numberOfMarkers;
 	}
 
 	if (markers.length !== 0) {
-		map.fitBounds(bounds);
+		//map.fitBounds(bounds);
 		map.setCenter(bounds.getCenter());
 	}
 	else {
-		map.setCenter(defaultLatLng);
-		map.setZoom(defaultZoom);
+		//map.setCenter(defaultLatLng);
+		//map.setZoom(defaultZoom);
 	}
 	$("#eventslist").html(htmlEventsList);
 
@@ -249,7 +283,10 @@ function mapInitialize() {
 {% endblock %}
 
 {% block main %}
-	<div id="map"></div>
+	<div id="leftcolumn">
+		<div id="map"></div>
+		<div id="eventtypes"></div>
+	</div>
 	<div id="debug">
 		<p>Отладочная информация</p>
 		<br>
