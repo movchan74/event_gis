@@ -2,6 +2,8 @@
 
 {% block media %}
 <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=drawing"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/jquery.datetimepicker.css"/ >
+<script src="{{ STATIC_URL }}js/jquery.datetimepicker.js"></script>
 <script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer.js"></script>
 <script type="text/javascript">
 var drawingManager;
@@ -15,6 +17,7 @@ var openedInfoWindow;
 var selectedPolygon;
 var selectedTypes = [];
 var selectedEventIDs = [];
+var start_time, end_time;
 
 var defaultLatLng = new google.maps.LatLng( {{ lat }}, {{ lon }});
 var defaultZoom = 8;
@@ -32,14 +35,29 @@ window.onload = function () {
 
 	getEventTypes();
 	mapInitialize();
+
+	var datetimeOptions = {
+		format:'d.m.Y H:i',
+		mask:true,
+		lang:'ru',
+		onClose: function(dp,$input) {
+			getEvents();
+		}
+	};
+
+	$('#start_timepicker').datetimepicker(datetimeOptions);
+	$('#end_timepicker').datetimepicker(datetimeOptions);
 };
 
-function getEvents (/*types, startDate, endDate, bounds*/) {
+function getEvents () {
 	var types = selectedTypes.join('+');
+	start_time = document.getElementById('start_timepicker').value;
+	end_time = document.getElementById('end_timepicker').value;
+
 	if (types !== undefined && types != '')
 		types='type=' + types + '&';
 	$.ajax({
-		url: "/filter_events?"+ types +"start_time=2011-01-01+00-00&end_time=2014-04-04+00-00",
+		url: "/filter_events?"+ types +"start_time=" + start_time.replace(' ','+') + "&end_time=" + end_time.replace(' ','+'),
 		type: "GET",
 		dataType: "json",
 		cache: false,
@@ -220,7 +238,7 @@ function onDataReceived(events) {
 		htmlEventsList += ('<div class="eventbox"><input type=checkbox class="event" checked="checked" onclick="refreshSelectedIDs()" name="event' + 
 		 	currentEvent.id + '">&nbsp;</input><a href="javascript:eventClick(' + 
 			numberOfMarkers + ')">' + currentEvent.name + 
-			"<\/a><br>" + currentEvent.address + "<\/div><br><br>");
+			"<\/a><br>" + currentEvent.address + "<br>" + currentEvent.start_time + "-" + currentEvent.end_time + "<\/div><br><br>");
 
 		// add id of currentEvent to the list of selected event IDs
 		selectedEventIDs.push(currentEvent.id);
@@ -312,6 +330,14 @@ function mapInitialize() {
 	<div id="leftcolumn">
 		<div id="map"></div>
 		<div id="eventtypes"></div>
+		<div id="datetime">
+			Время начала:<br>
+			<input id="start_timepicker" type="text" value="12.04.2014 00:00" />
+			<br>
+			<br>
+			Время конца:<br>
+			<input id="end_timepicker" type="text" value="12.04.2014 00:00" />
+		</div>
 	</div>
 	<div id="debug">
 		<p>Отладочная информация</p>
@@ -320,6 +346,8 @@ function mapInitialize() {
 		<input type="button" id="clear_features" value="Очистить" />
 		<br>
 		<input type="button" id="makepath" value="Проложить маршрут" onclick="alert(selectedEventIDs)" />
+		<br>
+		<div id="debugdate"></div>
 	</div>
 	<div id="eventslist"></div>
 {% endblock %}

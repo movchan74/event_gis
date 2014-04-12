@@ -30,12 +30,12 @@ class FilterEvents(ListAPIView):
 
         if 'start_time' in self.request.QUERY_PARAMS:
             start_time_str = self.request.QUERY_PARAMS.get('start_time')
-            start_time = datetime.strptime( start_time_str, "%Y-%m-%d %H-%M" )
-            query_objects = query_objects.filter( start_time__gt = start_time )
+            start_time = datetime.strptime( start_time_str, "%d.%m.%Y %H:%M" )
+            query_objects = query_objects.filter( start_time__gt = start_time ) # to do
 
         if 'end_time' in self.request.QUERY_PARAMS:
             end_time_str = self.request.QUERY_PARAMS.get('end_time')
-            end_time = datetime.strptime( end_time_str, "%Y-%m-%d %H-%M" )
+            end_time = datetime.strptime( end_time_str, "%d.%m.%Y %H:%M" )
             query_objects = query_objects.filter( end_time__lt = end_time )
 
         return query_objects.order_by('id')

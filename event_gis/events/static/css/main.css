@@ -56,7 +56,7 @@ body {
 
 #eventtypes {
 	float: left;
-	width: 100%;
+	width: 50%;
 	background-color: #DFF;
 	margin-top: 20px;
 	clear: right;
@@ -97,4 +97,13 @@ a {
 	margin-bottom: 20px;
 	height:70px; 
 	width:100%; 
+}
+
+#datetime {
+	float: left;
+	width: 50%;
+	height: 100px;
+	margin-top: 20px;
+	/*padding: 10px;*/
+	background-color: #CCC;
 }
