@@ -14,6 +14,7 @@ var numberOfMarkers = 0;
 var openedInfoWindow;
 var selectedPolygon;
 var selectedTypes = [];
+var selectedEventIDs = [];
 
 var defaultLatLng = new google.maps.LatLng( {{ lat }}, {{ lon }});
 var defaultZoom = 8;
@@ -54,25 +55,25 @@ function getEventTypes () {
 		cache: false,
 		success: function (types) {
 			$("#eventtypes").html(types.reduce(function(pr,cur){
-				return pr + '<input type=checkbox name="eventtype' + cur.id + 
+				return pr + '<input type=checkbox onclick="eventTypeClick()" name="eventtype' + cur.id + 
 					'" class="eventtype">&nbsp;' + cur.description + '</input><br>';
 			},""));
-			$("#eventtypes").click (function () {
-				var inp = document.getElementsByTagName('input');
-				var length = inp.length;
-				
-				selectedTypes = [];
-				
-				for (var i = 0; i < length; i++) {
-					if (inp[i].checked) {
-						// mas.push(inp[i].nextSibling.nodeValue);
-						selectedTypes.push(inp[i].name.match(/eventtype([0-9]*)/)[1]);
-					}
-				}
-				getEvents();
-			});
 		}
 	});
+}
+
+function eventTypeClick() {
+	var eventTypeCheckboxes = document.getElementsByClassName('eventtype');
+	var length = eventTypeCheckboxes.length;
+	
+	selectedTypes = [];
+	
+	for (var i = 0; i < length; i++) {
+		if (eventTypeCheckboxes[i].checked) {
+			selectedTypes.push(eventTypeCheckboxes[i].name.match(/eventtype([0-9]*)/)[1]);
+		}
+	}
+	getEvents();
 }
 
 function setInfowindow(newInfoWindow) {
@@ -99,6 +100,10 @@ function clearMarkers () {
 	markers = [];
 	markerContents = [];
 	numberOfMarkers = 0;
+}
+
+function setMarkerMap (map,i) {
+	markers[i].setMap(map);
 }
 
 function createMarker(map,latlng,title,markerContent) {
@@ -160,11 +165,30 @@ function createMarker(map,latlng,title,markerContent) {
 	return marker;
 }
 
+function refreshSelectedIDs () {
+	selectedEventIDs = [];
+
+	var eventCheckboxes = document.getElementsByClassName('event');
+	var length = eventCheckboxes.length;
+
+	for (var i = 0; i < length; i++) {
+		if (eventCheckboxes[i].checked) {
+			setMarkerMap(map,i);
+			selectedEventIDs.push(eventCheckboxes[i].name.match(/event([0-9]*)/)[1]);
+		}
+		else {
+			setMarkerMap(null,i);
+		}
+	}
+}
+
 function onDataReceived(events) {
 	var htmlEventsList = "";	
 
 	var bounds = new google.maps.LatLngBounds();
 	
+
+	selectedEventIDs = [];
 	// delete previous markers from map
 	clearMarkers();
 	// create new markers
@@ -193,9 +217,13 @@ function onDataReceived(events) {
 		bounds.extend(latlng);
 
 		// add features for list of event next to map
-		htmlEventsList += ('<div class="event"><a href="javascript:eventClick(' + 
+		htmlEventsList += ('<div class="eventbox"><input type=checkbox class="event" checked="checked" onclick="refreshSelectedIDs()" name="event' + 
+		 	currentEvent.id + '">&nbsp;</input><a href="javascript:eventClick(' + 
 			numberOfMarkers + ')">' + currentEvent.name + 
 			"<\/a><br>" + currentEvent.address + "<\/div><br><br>");
+
+		// add id of currentEvent to the list of selected event IDs
+		selectedEventIDs.push(currentEvent.id);
 		
 		++numberOfMarkers;
 	}
@@ -273,8 +301,6 @@ function mapInitialize() {
 	drawingManager.setDrawingMode(null);
 }
 
-//google.maps.event.addDomListener(window, 'load', mapInitialize);
-
 </script>
 {% endblock %}
 
@@ -292,6 +318,8 @@ function mapInitialize() {
 		<br>
 		<textarea id="polygon"> </textarea> <br>
 		<input type="button" id="clear_features" value="Очистить" />
+		<br>
+		<input type="button" id="makepath" value="Проложить маршрут" onclick="alert(selectedEventIDs)" />
 	</div>
 	<div id="eventslist"></div>
 {% endblock %}

@@ -38,7 +38,7 @@ class FilterEvents(ListAPIView):
             end_time = datetime.strptime( end_time_str, "%Y-%m-%d %H-%M" )
             query_objects = query_objects.filter( end_time__lt = end_time )
 
-        return query_objects
+        return query_objects.order_by('id')
 
 
 # http://127.0.0.1:8000/event_types
