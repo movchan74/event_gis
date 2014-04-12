@@ -7,10 +7,10 @@ def render_main_page(request):
 	default_lat = '55.7572258153171276'
 	return render_to_response('main_page.html', {'lon' : default_lon, 'lat' : default_lat}, context_instance=RequestContext(request))
 
-
-
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.renderers import UnicodeJSONRenderer
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from events.models import Event, EventType
 from events.serializers import EventSerializer, EventTypeSerializer
 from datetime import datetime
@@ -39,6 +39,45 @@ class FilterEvents(ListAPIView):
             query_objects = query_objects.filter( end_time__lt = end_time )
 
         return query_objects.order_by('id')
+
+# http://127.0.0.1:8000/make_route?event_ids=1+5+3+2
+class MakeRoute(APIView):
+
+    def get_events(self, ids):
+        events = Event.objects.filter(id__in = ids).order_by( 'start_time' )
+        return events
+
+    def hasTimeIntersections(self, eventTimes):
+        for i in xrange(0, len(eventTimes) - 1):
+            if eventTimes[i].get("end_time") > eventTimes[i+1].get("start_time"):
+                return {"hasTimeIntersections" : True, "first" : eventTimes[i].get("id"), "second" : eventTimes[i+1].get("id") }
+        print "No intersections"
+        return  {"hasTimeIntersections" : False}
+
+    def getRoute(self, events):
+        return events[0].name
+
+
+    def get(self, request, format = None):
+        event_ids_string = request.QUERY_PARAMS.get('event_ids').split()
+        event_ids = []
+        for event in event_ids_string:
+            event_ids.append( int(event) )
+
+        events = self.get_events( event_ids )
+
+        eventTimes = [];
+        for event in events:
+            eventTimes.append(  {"id" : event.id, "start_time" : event.start_time, "end_time" : event.end_time} )
+
+        timeIntersections = self.hasTimeIntersections( eventTimes )
+
+        if ( timeIntersections.get("hasTimeIntersections") ):
+            return Response( timeIntersections )
+        else:
+            route = self.getRoute( events )
+            return Response( route )
+
 
 
 # http://127.0.0.1:8000/event_types
