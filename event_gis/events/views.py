@@ -1,6 +1,7 @@
 # coding=utf-8
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+import urllib2, json
 
 def render_main_page(request):
 	default_lon = '37.6461231656120958'
@@ -55,7 +56,36 @@ class MakeRoute(APIView):
         return  {"hasTimeIntersections" : False}
 
     def getRoute(self, events):
-        return events[0].name
+        events = list(events)
+        url = 'http://maps.googleapis.com/maps/api/directions/json?'
+        start_event = events[0]
+        end_event = events[-1]
+        waypoints = []
+        params = {
+            'origin' : '%s,%s' % (start_event.location.y, start_event.location.x),
+            'destination' : '%s,%s' % (end_event.location.y, end_event.location.x),
+            'sensor' : 'false',
+            'language' : 'ru',
+        }
+        for i in range(1, len(events)-1):
+            event = events[i]
+            waypoints.append('%s,%s' % (event.location.y, event.location.x))
+        params['waypoints'] = '|'.join(waypoints)
+        print url + '&'.join([key+'='+params[key] for key in params])
+        response = urllib2.urlopen(url + '&'.join([key+'='+params[key] for key in params])).read()
+        route = json.loads(response)
+        output = {'legs' : []}
+        for leg in route['routes'][0]['legs']:
+            leg_info = {}
+            leg_info['duration'] = leg['duration']['value']
+            leg_info['steps'] = []
+            for step in leg['steps']:
+                step_info = {}
+                step_info['text'] = step['html_instructions']
+                step_info['polyline'] = step['polyline']['points']
+                leg_info['steps'].append(step_info)
+            output['legs'].append(leg_info)
+        return json.dumps(output)
 
 
     def get(self, request, format = None):
