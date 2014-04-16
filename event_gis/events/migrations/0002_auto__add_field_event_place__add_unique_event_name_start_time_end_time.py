@@ -8,35 +8,34 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'EventType'
-        db.delete_table(u'events_eventtype')
+        # Adding field 'Event.place'
+        db.add_column(u'events_event', 'place',
+                      self.gf('django.db.models.fields.CharField')(max_length=250, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding unique constraint on 'Event', fields ['name', 'start_time', 'end_time']
+        db.create_unique(u'events_event', ['name', 'start_time', 'end_time'])
 
 
-        # Renaming column for 'Event.event_type' to match new field type.
-        db.rename_column(u'events_event', 'event_type_id', 'event_type')
-        # Changing field 'Event.event_type'
-        db.alter_column(u'events_event', 'event_type', self.gf('django.db.models.fields.CharField')(max_length=150))
-        # Removing index on 'Event', fields ['event_type']
-        db.delete_index(u'events_event', ['event_type_id'])
+        # Changing field 'EventType.description'
+        db.alter_column(u'events_eventtype', 'description', self.gf('django.db.models.fields.TextField')(null=True))
+        # Adding unique constraint on 'EventType', fields ['name']
+        db.create_unique(u'events_eventtype', ['name'])
 
 
     def backwards(self, orm):
-        # Adding index on 'Event', fields ['event_type']
-        db.create_index(u'events_event', ['event_type_id'])
+        # Removing unique constraint on 'EventType', fields ['name']
+        db.delete_unique(u'events_eventtype', ['name'])
 
-        # Adding model 'EventType'
-        db.create_table(u'events_eventtype', (
-            ('description', self.gf('django.db.models.fields.TextField')()),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=150)),
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-        ))
-        db.send_create_signal(u'events', ['EventType'])
+        # Removing unique constraint on 'Event', fields ['name', 'start_time', 'end_time']
+        db.delete_unique(u'events_event', ['name', 'start_time', 'end_time'])
+
+        # Deleting field 'Event.place'
+        db.delete_column(u'events_event', 'place')
 
 
-        # Renaming column for 'Event.event_type' to match new field type.
-        db.rename_column(u'events_event', 'event_type', 'event_type_id')
-        # Changing field 'Event.event_type'
-        db.alter_column(u'events_event', 'event_type_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['events.EventType']))
+        # Changing field 'EventType.description'
+        db.alter_column(u'events_eventtype', 'description', self.gf('django.db.models.fields.TextField')(default='-'))
 
     models = {
         u'auth.group': {
@@ -76,16 +75,23 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'events.event': {
-            'Meta': {'object_name': 'Event'},
+            'Meta': {'unique_together': "(('name', 'start_time', 'end_time'),)", 'object_name': 'Event'},
             'address': ('django.db.models.fields.CharField', [], {'max_length': '150'}),
             'description': ('django.db.models.fields.TextField', [], {}),
             'end_time': ('django.db.models.fields.DateTimeField', [], {}),
-            'event_type': ('django.db.models.fields.CharField', [], {'max_length': '150'}),
+            'event_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['events.EventType']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'location': ('django.contrib.gis.db.models.fields.PointField', [], {}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '150'}),
+            'place': ('django.db.models.fields.CharField', [], {'max_length': '250', 'null': 'True', 'blank': 'True'}),
             'start_time': ('django.db.models.fields.DateTimeField', [], {}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True'})
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'})
+        },
+        u'events.eventtype': {
+            'Meta': {'object_name': 'EventType'},
+            'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '150'})
         }
     }
 
