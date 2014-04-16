@@ -8,12 +8,13 @@ from datetime import timedelta
 from models import Event, EventType
 from django.core.exceptions import ObjectDoesNotExist
 import string
+import pytz
 
 types = {
 	u'Балет и опера' : 	u'Балет и опера',
 	u'Мюзиклы' : u'Мюзиклы',
-	u'Балет' : 	u'Балет',
-	u'Творческий вечер' : 	u'Творческий вечер',
+	u'Балет' : 	u'Балет и опера',
+	u'Творческий вечер' : 	u'Творческие вечера',
 	u'Спектакли' : 	u'Спектакли',
 	u'Концерты' : 	u'Концерты',
 	u'Рок' : u'Концерты',
@@ -27,8 +28,8 @@ types = {
 	u'Фолк' : u'Концерты',
 	u'Блюз и джаз' : u'Концерты',
 	u'Рок-н-ролл' : u'Концерты',
-	u'Мхатовский вечер' : 	u'Мхатовский вечер',
-	u'Международный фестиваль' : 	u'Международный фестиваль',
+	u'Мхатовский вечер' : 	u'Творческие вечера',
+	u'Международный фестиваль' : u'Фестивали',
 	u'Лекции' : 	u'Лекции',
 	u'Вечеринки' : 	u'Вечеринки',
 	u'Быстрые свидания' : u'Вечеринки',
@@ -41,11 +42,11 @@ types = {
 	u'Экстремальный спорт' : u'Спорт',
 	u'Зимний спорт' : u'Спорт',
 	u'Бег' :  u'Спорт',
-	u'Экстремальные развлечения' : u'Экстрим',
+	u'Экстремальные развлечения' : u'Спорт',
 	u'Шоу' : 	u'Шоу',
 	u'Юмористические мероприятия' : u'Шоу',
 	u'Спортивно-развлекательное шоу' : 	u'Шоу',
-	u'Курсы' : 	u'Курсы',
+	u'Курсы' : 	u'Обучение',
 	u'Экскурсии' : 	u'Экскурсии',
 	u'Праздники' : 	u'Праздники',
 	u'Мастер-классы' : 	u'Обучение',
@@ -104,6 +105,7 @@ def detect_event_type(categories_text):
 	return None
 
 def load_events():
+	tz = pytz.timezone('Europe/Moscow')
 	g = Grab()
 	g_details = Grab()
 
@@ -164,7 +166,8 @@ def load_events():
 						end_datetime = datetime.strptime('%s %s %s 00:00' % (year, month, day), '%Y %m %d %H:%M') + timedelta(days=1)
 					else:
 						print 'Error!!!'
-			
+			start_datetime = tz.localize(start_datetime)
+			end_datetime = tz.localize(end_datetime)
 			try:
 				Event.objects.get(name=name, start_time=start_datetime, end_time=end_datetime)
 			except ObjectDoesNotExist:
