@@ -3,6 +3,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.test import APIRequestFactory
 from events.views import FilterEvents
+import time
 # from events.models import Event
 
 class REST_tests(APITestCase):
@@ -28,10 +29,13 @@ class REST_tests(APITestCase):
         #ToDo incorrect test
 
     def test_time_filter( self ):
-        filters = {'start_time': '2000-1-25 13-30'}
+        filters = {'start_time': '25.01.2000 13:30'}
+        filters_time = time.strptime( filters.get('start_time'), "%d.%m.%Y %H:%M")
+
         filter_events_response = self.render_filter_events_response( filters )
         for event in filter_events_response:
-            self.assertLess( filters.get('start_time'), event.get('start_time') )
+            event_time = time.strptime( event.get('start_time'), "%Y-%m-%dT%H:%M:%SZ")
+            self.assertLess( filters_time, event_time )
 
 
 

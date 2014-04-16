@@ -39,7 +39,7 @@ class FilterEvents(ListAPIView):
             end_time = datetime.strptime( end_time_str, "%d.%m.%Y %H:%M" )
             query_objects = query_objects.filter( end_time__lt = end_time )
 
-        return query_objects.order_by('id')
+        return query_objects.order_by('start_time')
 
 # http://127.0.0.1:8000/make_route?event_ids=1+5+3+2
 class MakeRoute(APIView):
@@ -103,7 +103,7 @@ class MakeRoute(APIView):
         timeIntersections = self.hasTimeIntersections( eventTimes )
 
         if ( timeIntersections.get("hasTimeIntersections") ):
-            return Response( timeIntersections )
+            return Response( json.dumps(timeIntersections) )
         else:
             route = self.getRoute( events )
             return Response( route )

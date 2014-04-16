@@ -4,7 +4,7 @@
 <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=drawing"></script>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/jquery.datetimepicker.css"/ >
 <script src="{{ STATIC_URL }}js/jquery.datetimepicker.js"></script>
-<script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer.js"></script>
+<!-- <script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/src/markerclusterer.js"></script> -->
 <script type="text/javascript">
 var drawingManager;
 var selectedPointOverlay;
@@ -18,6 +18,8 @@ var selectedPolygon;
 var selectedTypes = [];
 var selectedEventIDs = [];
 var start_time, end_time;
+var poly = [];
+var bounds;
 
 var defaultLatLng = new google.maps.LatLng( {{ lat }}, {{ lon }});
 var defaultZoom = 8;
@@ -50,24 +52,24 @@ window.onload = function () {
 };
 
 function rainbow(numOfSteps, step) {
-    // This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distinguishable vibrant markers in Google Maps and other apps.
-    // Adam Cole, 2011-Sept-14
-    // HSV to RBG adapted from: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
-    var r, g, b;
-    var h = step / numOfSteps;
-    var i = ~~(h * 6);
-    var f = h * 6 - i;
-    var q = 1 - f;
-    switch(i % 6){
-        case 0: r = 1, g = f, b = 0; break;
-        case 1: r = q, g = 1, b = 0; break;
-        case 2: r = 0, g = 1, b = f; break;
-        case 3: r = 0, g = q, b = 1; break;
-        case 4: r = f, g = 0, b = 1; break;
-        case 5: r = 1, g = 0, b = q; break;
-    }
-    var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
-    return (c);
+	// This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distinguishable vibrant markers in Google Maps and other apps.
+	// Adam Cole, 2011-Sept-14
+	// HSV to RBG adapted from: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
+	var r, g, b;
+	var h = step / numOfSteps;
+	var i = ~~(h * 6);
+	var f = h * 6 - i;
+	var q = 1 - f;
+	switch(i % 6){
+		case 0: r = 1, g = f, b = 0; break;
+		case 1: r = q, g = 1, b = 0; break;
+		case 2: r = 0, g = 1, b = f; break;
+		case 3: r = 0, g = q, b = 1; break;
+		case 4: r = f, g = 0, b = 1; break;
+		case 5: r = 1, g = 0, b = q; break;
+	}
+	var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
+	return (c);
 }
 
 function getEvents () {
@@ -132,16 +134,24 @@ function eventClick(i) {
 	setInfowindow(infoWindow);
 }
 
+function clearRoute () {
+	for (var i in poly)
+	{
+		poly[i].setMap(null);
+	}
+	poly = [];
+}
+
 function clearMarkers () {
 	for (var i = 0; i < markers.length; i++) {
-		markers[i].setMap(null);
+		setMarkerMap(i,null);
 	}
 	markers = [];
 	markerContents = [];
 	numberOfMarkers = 0;
 }
 
-function setMarkerMap (map,i) {
+function setMarkerMap (i,map) {
 	markers[i].setMap(map);
 }
 
@@ -212,37 +222,55 @@ function refreshSelectedIDs () {
 
 	for (var i = 0; i < length; i++) {
 		if (eventCheckboxes[i].checked) {
-			setMarkerMap(map,i);
+			setMarkerMap(i,map);
 			selectedEventIDs.push(eventCheckboxes[i].name.match(/event([0-9]*)/)[1]);
 		}
 		else {
-			setMarkerMap(null,i);
+			setMarkerMap(i,null);
 		}
 	}
+	// makeRoute();
 }
 
 function makeRoute() {
 	$.ajax({
-		url: "/make_route?event_ids=1+5+3+2",
+		url: "/make_route?event_ids="+selectedEventIDs.join("+"),
 		type: "GET",
 		dataType: "json",
 		cache: false,
 		success: function (route) {
+			
 			route = JSON.parse(route);
-			n = route['legs'].length;
-			for (var leg in route['legs']) {
-				for (var step in route['legs'][leg]['steps']) {
-					// console.log();
-					path = google.maps.geometry.encoding.decodePath(route['legs'][leg]['steps'][step]['polyline']);
-					poly = new google.maps.Polyline({ 
-						path: path,
-						strokeColor: rainbow(n, leg),
-						strokeOpacity: 0.8,
-					});
-					poly.setMap(map);
-				}
+			clearRoute();
+			var eventboxes = document.getElementsByClassName('eventbox'); // gets my span
+			for (var i = 0; i < eventboxes.length; ++i) {
+				eventboxes[i].style.backgroundColor = "#CCC";
 			}
+			if (route.hasTimeIntersections) 
+			{
+				alert("Events " + route.first + " and " + route.second + " has time intersections! Fix please.");
+
+				$("#eventbox" + route.first).css('background-color', '#F88');
+				$("#eventbox" + route.second).css('background-color', '#F88');
 				
+				return;
+			}
+
+			var legsLength = route.legs.length;
+			for (var leg in route.legs) {
+				var path = [];
+				for (var step in route.legs[leg].steps) {
+					path = path.concat(google.maps.geometry.encoding.decodePath(route.legs[leg].steps[step].polyline));
+				}
+				poly.push(new google.maps.Polyline({ 
+					path: path,
+					strokeColor: rainbow(legsLength, leg),
+					strokeOpacity: 0.8,
+				}));
+				
+				poly[leg].setMap(map);
+			}
+			map.fitBounds(bounds);
 		}
 	});
 }
@@ -250,7 +278,7 @@ function makeRoute() {
 function onDataReceived(events) {
 	var htmlEventsList = "";	
 
-	var bounds = new google.maps.LatLngBounds();
+	bounds = new google.maps.LatLngBounds();
 	
 
 	selectedEventIDs = [];
@@ -282,7 +310,7 @@ function onDataReceived(events) {
 		bounds.extend(latlng);
 
 		// add features for list of event next to map
-		htmlEventsList += ('<div class="eventbox"><input type=checkbox class="event" checked="checked" onclick="refreshSelectedIDs()" name="event' + 
+		htmlEventsList += ('<div id="eventbox' + currentEvent.id + '" class="eventbox"><input type=checkbox class="event" checked="checked" onclick="refreshSelectedIDs()" name="event' + 
 		 	currentEvent.id + '">&nbsp;</input><a href="javascript:eventClick(' + 
 			numberOfMarkers + ')">' + currentEvent.name + 
 			"<\/a><br>" + currentEvent.address + "<br>" + currentEvent.start_time + "-" + currentEvent.end_time + "<\/div><br><br>");
@@ -387,14 +415,14 @@ function mapInitialize() {
 		</div>
 	</div>
 	<div id="debug">
-		<p>Отладочная информация</p>
+		<!-- <p>Отладочная информация</p>
 		<br>
 		<textarea id="polygon"> </textarea> <br>
 		<input type="button" id="clear_features" value="Очистить" />
-		<br>
+		<br> -->
 		<input type="button" id="makepath" value="Проложить маршрут" onclick="makeRoute()"/>
-		<br>
-		<div id="debugdate"></div>
+		<!-- <br>
+		<div id="debugdate"></div> -->
 	</div>
 	<div id="eventslist"></div>
 {% endblock %}
